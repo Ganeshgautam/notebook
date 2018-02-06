@@ -5,41 +5,41 @@ public class FlipMarkerRingBufferQueue {
 
     public int capacity = 0;
     public int writePos = 0;
-    public int readPos  = 0;
-    public boolean flipped = false;   //the flip marker
+    public int readPos = 0;
+    public boolean flipped = false; // the flip marker
 
     public FlipMarkerRingBufferQueue(int capacity) {
         this.capacity = capacity;
-        this.elements = new Object[capacity];
+        elements = new Object[capacity];
     }
 
     public void reset() {
-        this.writePos = 0;
-        this.readPos  = 0;
-        this.flipped  = false;
+        writePos = 0;
+        readPos = 0;
+        flipped = false;
     }
 
     public int available() {
-        if(!flipped){
+        if (!flipped) {
             return writePos - readPos;
         }
         return capacity - readPos + writePos;
     }
 
     public int remainingCapacity() {
-        if(!flipped){
+        if (!flipped) {
             return capacity - writePos;
         }
         return readPos - writePos;
     }
 
-    public boolean put(Object element){
-        if(!flipped){
-            if(writePos == capacity){
+    public boolean put(Object element) {
+        if (!flipped) {
+            if (writePos == capacity) {
                 writePos = 0;
                 flipped = true;
 
-                if(writePos < readPos){
+                if (writePos < readPos) {
                     elements[writePos++] = element;
                     return true;
                 } else {
@@ -50,7 +50,7 @@ public class FlipMarkerRingBufferQueue {
                 return true;
             }
         } else {
-            if(writePos < readPos ){
+            if (writePos < readPos) {
                 elements[writePos++] = element;
                 return true;
             } else {
@@ -61,18 +61,18 @@ public class FlipMarkerRingBufferQueue {
 
 
     public Object take() {
-        if(!flipped){
-            if(readPos < writePos){
+        if (!flipped) {
+            if (readPos < writePos) {
                 return elements[readPos++];
             } else {
                 return null;
             }
         } else {
-            if(readPos == capacity){
+            if (readPos == capacity) {
                 readPos = 0;
                 flipped = false;
 
-                if(readPos < writePos){
+                if (readPos < writePos) {
                     return elements[readPos++];
                 } else {
                     return null;
