@@ -28,21 +28,55 @@ public class VelocityFileSearch {
     static Set<String> pluginAllowedMethodSet = new HashSet<>();
 
     static String[] directoryPaths = {
-            "/Users/ggautam/Work/data/temp/atlassian/atlassian-oauth",
+//            "/Users/ggautam/Work/data/temp/atlassian/application-links",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-analytics",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-bot-killer-plugin",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-keyboard-shortcuts",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-mail",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-nav-links",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-oauth",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-plugins-osgi-testrunner-parent",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-plugins-viewer",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-streams",
+//            "/Users/ggautam/Work/data/temp/atlassian/functest-plugin",
+//            "/Users/ggautam/Work/data/temp/atlassian/personal-access-tokens",
+//            "/Users/ggautam/Work/data/temp/atlassian/rest-api-browser",
+//            "/Users/ggautam/Work/data/temp/atlassian/confluence-toc-plugin",
+            "/Users/ggautam/Work/data/temp/confluence-questions",
+//            "/Users/ggautam/Work/data/temp/confluence-ancillary-plugins",
+//            "/Users/ggautam/Work/data/temp/confluence-content-plugins",
+//            "/Users/ggautam/Work/data/temp/confluence-frontend-plugins",
+//            "/Users/ggautam/Work/data/temp/confluence-jira-integration-plugins",
+//            "/Users/ggautam/Work/data/temp/confluence-open-plugins",
+//            "/Users/ggautam/Work/data/temp/confluence-public-plugins",
+//            "/Users/ggautam/Work/data/temp/confluence",
     };
+
     static String confluenceDirPath = "/Users/ggautam/Work/source/atlassian/confluence";
     static String outputFileName = "matches-all";
 
     static String onlyMethodNamesFileName = "matches-method-names";
 
-    static String regex = "\\$[a-zA-Z_$][a-zA-Z\\d_$]*\\s*\\.([a-zA-Z_$][a-zA-Z\\d_$]*)\\s*";
+    // Main regex for covering normal cases, minimum false positives
+    static String regex = "\\$!?[a-zA-Z_$][a-zA-Z\\d_$]*\\s*\\.([a-zA-Z_$][a-zA-Z\\d_$]*)\\s*";
+
+    //Regex to cover nested cases, can cause false positives
+//    static String regex = "\\$!?[a-zA-Z_$][a-zA-Z\\d_$]*\\s*\\..*\\.([a-zA-Z_$][a-zA-Z\\d_$]*)\\s*";
+
+    // Regex to cover non-unique method scan algo, can cause false positives
+//    static String regex = "\\$!?[a-zA-Z_$][a-zA-Z\\d_$]*\\s*\\.([a-zA-Z_$][a-zA-Z\\d_$]*)\\s*";
+
     static String methodAllowlistRegex = "<method>.+#([a-zA-Z_$][a-zA-Z\\d_$]*)";
 
     static String[] skipObjects = new String[] {
             "$htmlUtil",
             "$velocityUtil",
             "$generalUtil",
-            "$stringUtils"
+            "$stringUtils",
+            "$!htmlUtil",
+            "$!velocityUtil",
+            "$!generalUtil",
+            "$!stringUtils"
     };
 
     public static void main(String[] args) throws IOException {
