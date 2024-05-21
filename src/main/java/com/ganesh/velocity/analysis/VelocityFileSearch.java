@@ -22,17 +22,18 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class VelocityFileSearch {
-    static Set<Match> matchesSet = new HashSet<>();
+    static Set<Match> fullMatchesFoundInVMs = new HashSet<>();
     static Set<String> foundMethodNamesInVMs = new HashSet<>();
-    static Set<String> allowedMethodSet = new HashSet<>();
+    static Set<String> coreAllowedMethodSet = new HashSet<>();
+    static Set<String> pluginAllowedMethodSet = new HashSet<>();
 
-    static String directoryPath = "/Users/ggautam/Work/source/atlassian/atlassian-oauth";
+    static String[] directoryPaths = {
+            "/Users/ggautam/Work/data/temp/atlassian/atlassian-oauth",
+    };
     static String confluenceDirPath = "/Users/ggautam/Work/source/atlassian/confluence";
-    static String outputFileName = "matches-all.csv";
-    static String outputFile = outputFileName + "-" + directoryPath.split("/")[(directoryPath.split("/").length - 1)];
+    static String outputFileName = "matches-all";
 
-    static String onlyMethodNamesFileName = "matches-method-names.csv";
-    static String onlyMethodNamesFile = onlyMethodNamesFileName + "-" + directoryPath.split("/")[(directoryPath.split("/").length - 1)];
+    static String onlyMethodNamesFileName = "matches-method-names";
 
     static String regex = "\\$[a-zA-Z_$][a-zA-Z\\d_$]*\\s*\\.([a-zA-Z_$][a-zA-Z\\d_$]*)\\s*";
     static String methodAllowlistRegex = "<method>.+#([a-zA-Z_$][a-zA-Z\\d_$]*)";
@@ -45,28 +46,43 @@ public class VelocityFileSearch {
     };
 
     public static void main(String[] args) throws IOException {
-        System.out.println("Populating VM data set for methods");
-        startSearchAndPopulateSets(regex, directoryPath);
-
-        System.out.println("Scanning plugin XMLs");
-        loadMethodNamesFromPluginXMLs(methodAllowlistRegex, directoryPath);
-
-        System.out.println("Scanning core plugin XMLs");
-        loadMethodNamesFromPluginXMLs(methodAllowlistRegex, confluenceDirPath);
-
         System.out.println("Scanning velocity-default.properties XMLs");
         loadMethodNamesFromVelocityProperties();
 
-        System.out.println("Cleaning up method file mappings");
-        cleanUpMatchesSet();
+        System.out.println("Scanning core plugin XMLs");
+        loadMethodNamesFromPluginXMLs(methodAllowlistRegex, confluenceDirPath, coreAllowedMethodSet);
 
-        System.out.println("Cleaning up methods list");
-        cleanUpFoundMethodNamesInVMsSet();
+        for (String directoryPath : directoryPaths) {
+            System.out.println("Scanning " + directoryPath);
+            resetContainers();
 
-        System.out.println("Publishing output files");
-        publishFiles(outputFile, onlyMethodNamesFile);
+            System.out.println("Scanning plugin XMLs - " +  directoryPath);
+            loadMethodNamesFromPluginXMLs(methodAllowlistRegex, directoryPath, pluginAllowedMethodSet);
 
-        System.out.println("Search completed. Results written to " + outputFile);
+            System.out.println("Populating VM data set for methods - " +  directoryPath);
+            startSearchAndPopulateSets(regex, directoryPath);
+
+            System.out.println("Cleaning up method file mappings - " +  directoryPath);
+            filterUpMatchesInVMSet();
+
+            System.out.println("Cleaning up methods list - " +  directoryPath);
+            filterUpFoundMethodNamesInVMsSet();
+
+            String outputFile = outputFileName + "-" + directoryPath.split("/")[(directoryPath.split("/").length - 1)] + ".csv";
+            String onlyMethodNamesFile = onlyMethodNamesFileName + "-" + directoryPath.split("/")[(directoryPath.split("/").length - 1)] + ".csv";
+            System.out.println("Publishing output files - " +  directoryPath);
+            publishFiles(outputFile, onlyMethodNamesFile);
+
+            System.out.println("Search completed. Results written to " + outputFile);
+        }
+        System.out.println("Search finished. Results written to ");
+    }
+
+    private static void resetContainers() {
+        fullMatchesFoundInVMs.clear();
+        foundMethodNamesInVMs.clear();
+        pluginAllowedMethodSet.clear();
+        pluginAllowedMethodSet.addAll(coreAllowedMethodSet);
     }
 
     private static void startSearchAndPopulateSets(String regex, String directoryPath) throws IOException {
@@ -83,7 +99,7 @@ public class VelocityFileSearch {
                 });
     }
 
-    private static void loadMethodNamesFromPluginXMLs(String regex, String directoryPath) throws IOException {
+    private static void loadMethodNamesFromPluginXMLs(String regex, String directoryPath, Set<String> allowedMethodSet) throws IOException {
         Pattern pattern = Pattern.compile(regex);
         Files.walk(Paths.get(directoryPath))
                 .filter(Files::isRegularFile)
@@ -91,7 +107,7 @@ public class VelocityFileSearch {
                 .forEach(file -> {
                     try {
                         BufferedReader reader = new BufferedReader(new FileReader(file.toFile()));
-                        searchAndPrepareMatchingAllowedSets(file, pattern, reader);
+                        searchAndPrepareMatchingAllowedSets(file, pattern, reader, allowedMethodSet);
                         reader.close();
 
                     } catch (IOException e) {
@@ -99,7 +115,7 @@ public class VelocityFileSearch {
                     }
                 });
 
-        System.out.println(allowedMethodSet);
+        System.out.println(pluginAllowedMethodSet);
     }
 
     private static void loadMethodNamesFromVelocityProperties() {
@@ -112,28 +128,28 @@ public class VelocityFileSearch {
             Set<String> methodSet = extractMethodNamesFromAllowlist(methods);
             System.out.println(methodSet);
 
-            allowedMethodSet.addAll(methodSet);
+            coreAllowedMethodSet.addAll(methodSet);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void cleanUpMatchesSet() {
-        Arrays.stream(skipObjects).forEach(o -> matchesSet.removeIf(s -> s.line.toLowerCase().startsWith(o.toLowerCase())));
+    private static void filterUpMatchesInVMSet() {
+        Arrays.stream(skipObjects).forEach(o -> fullMatchesFoundInVMs.removeIf(s -> s.line.toLowerCase().startsWith(o.toLowerCase())));
 
-        allowedMethodSet.forEach(m -> {
-            matchesSet.removeIf(s -> s.method.equalsIgnoreCase(m));
+        pluginAllowedMethodSet.forEach(m -> {
+            fullMatchesFoundInVMs.removeIf(s -> s.method.equalsIgnoreCase(m));
             if(m.startsWith("get") || m.startsWith("set")) {
-                matchesSet.removeIf(s -> s.method.equalsIgnoreCase(m.substring(3)));
+                fullMatchesFoundInVMs.removeIf(s -> s.method.equalsIgnoreCase(m.substring(3)));
             } else if(m.startsWith("is")) {
-                matchesSet.removeIf(s -> s.method.equalsIgnoreCase(m.substring(2)));
+                fullMatchesFoundInVMs.removeIf(s -> s.method.equalsIgnoreCase(m.substring(2)));
             }
         });
     }
 
-    private static void cleanUpFoundMethodNamesInVMsSet() {
-        foundMethodNamesInVMs.removeAll(allowedMethodSet);
-        allowedMethodSet.forEach(m -> {
+    private static void filterUpFoundMethodNamesInVMsSet() {
+        foundMethodNamesInVMs.removeAll(pluginAllowedMethodSet);
+        pluginAllowedMethodSet.forEach(m -> {
             foundMethodNamesInVMs.removeIf(s -> s.equalsIgnoreCase(m));
             if(m.startsWith("get") || m.startsWith("set")) {
                 foundMethodNamesInVMs.removeIf(s -> s.equalsIgnoreCase(m.substring(3)));
@@ -150,7 +166,7 @@ public class VelocityFileSearch {
         CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT.withHeader("Match", "Line", "Filename"));
         CSVPrinter onlyMethodNamesCsvPrinter = new CSVPrinter(onlyMethodNamesFileWriter, CSVFormat.DEFAULT.withHeader("Match"));
 
-        printMethodAndLines(csvPrinter, matchesSet);
+        printMethodAndLines(csvPrinter, fullMatchesFoundInVMs);
         printMethodNamesOnly(onlyMethodNamesCsvPrinter, foundMethodNamesInVMs);
 
         csvPrinter.close();
@@ -193,13 +209,13 @@ public class VelocityFileSearch {
                         )) {
                     continue;
                 }
-                matchesSet.add(new Match(capturedMethod, match, file.getFileName().toString()));
+                fullMatchesFoundInVMs.add(new Match(capturedMethod, match, file.getFileName().toString()));
                 foundMethodNamesInVMs.add(capturedMethod);
             }
         }
     }
 
-    private static void searchAndPrepareMatchingAllowedSets(Path file, Pattern pattern, BufferedReader reader) throws IOException {
+    private static void searchAndPrepareMatchingAllowedSets(Path file, Pattern pattern, BufferedReader reader, Set<String> allowedMethodSet) throws IOException {
         String line;
 
         while ((line = reader.readLine()) != null) {
