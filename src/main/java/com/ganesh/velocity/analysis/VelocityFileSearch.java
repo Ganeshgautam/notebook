@@ -42,14 +42,14 @@ public class VelocityFileSearch {
 //            "/Users/ggautam/Work/data/temp/atlassian/personal-access-tokens",
 //            "/Users/ggautam/Work/data/temp/atlassian/rest-api-browser",
 //            "/Users/ggautam/Work/data/temp/atlassian/confluence-toc-plugin",
-            "/Users/ggautam/Work/data/temp/confluence-questions",
-//            "/Users/ggautam/Work/data/temp/confluence-ancillary-plugins",
-//            "/Users/ggautam/Work/data/temp/confluence-content-plugins",
-//            "/Users/ggautam/Work/data/temp/confluence-frontend-plugins",
-//            "/Users/ggautam/Work/data/temp/confluence-jira-integration-plugins",
-//            "/Users/ggautam/Work/data/temp/confluence-open-plugins",
-//            "/Users/ggautam/Work/data/temp/confluence-public-plugins",
-//            "/Users/ggautam/Work/data/temp/confluence",
+//            "/Users/ggautam/Work/data/temp/confluence-questions",
+            "/Users/ggautam/Work/data/temp/confluence-ancillary-plugins",
+            "/Users/ggautam/Work/data/temp/confluence-content-plugins",
+            "/Users/ggautam/Work/data/temp/confluence-frontend-plugins",
+            "/Users/ggautam/Work/data/temp/confluence-jira-integration-plugins",
+            "/Users/ggautam/Work/data/temp/confluence-open-plugins",
+            "/Users/ggautam/Work/data/temp/confluence-public-plugins",
+            "/Users/ggautam/Work/data/temp/confluence",
     };
 
     static String confluenceDirPath = "/Users/ggautam/Work/source/atlassian/confluence";
@@ -94,13 +94,13 @@ public class VelocityFileSearch {
             loadMethodNamesFromPluginXMLs(methodAllowlistRegex, directoryPath, pluginAllowedMethodSet);
 
             System.out.println("Populating VM data set for methods - " +  directoryPath);
-            startSearchAndPopulateSets(regex, directoryPath);
+            crawlVMFilesAndPopulateJavaMethodCalls(regex, directoryPath);
 
             System.out.println("Cleaning up method file mappings - " +  directoryPath);
             filterUpMatchesInVMSet();
 
             System.out.println("Cleaning up methods list - " +  directoryPath);
-            filterUpFoundMethodNamesInVMsSet();
+            filterUpJustMethodMatchesInVMsSet();
 
             String outputFile = outputFileName + "-" + directoryPath.split("/")[(directoryPath.split("/").length - 1)] + ".csv";
             String onlyMethodNamesFile = onlyMethodNamesFileName + "-" + directoryPath.split("/")[(directoryPath.split("/").length - 1)] + ".csv";
@@ -119,14 +119,16 @@ public class VelocityFileSearch {
         pluginAllowedMethodSet.addAll(coreAllowedMethodSet);
     }
 
-    private static void startSearchAndPopulateSets(String regex, String directoryPath) throws IOException {
+    private static void crawlVMFilesAndPopulateJavaMethodCalls(String regex, String directoryPath) throws IOException {
         Pattern pattern = Pattern.compile(regex);
         Files.walk(Paths.get(directoryPath))
                 .filter(Files::isRegularFile)
                 .filter(path -> path.toString().endsWith(".vm") || path.toString().endsWith(".vmd"))
-                .forEach(file -> {
+                .forEach(velocityFile -> {
                     try {
-                        searchInFilesForMethodNames(file, pattern);
+                        BufferedReader reader = new BufferedReader(new FileReader(velocityFile.toFile()));
+                        searchAndPrepareMatchingSets(velocityFile, pattern, reader);
+                        reader.close();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -181,7 +183,7 @@ public class VelocityFileSearch {
         });
     }
 
-    private static void filterUpFoundMethodNamesInVMsSet() {
+    private static void filterUpJustMethodMatchesInVMsSet() {
         foundMethodNamesInVMs.removeAll(pluginAllowedMethodSet);
         pluginAllowedMethodSet.forEach(m -> {
             foundMethodNamesInVMs.removeIf(s -> s.equalsIgnoreCase(m));
@@ -218,15 +220,6 @@ public class VelocityFileSearch {
                     return m;
                 })
                 .collect(Collectors.toSet());
-    }
-
-
-    private static void searchInFilesForMethodNames(Path file, Pattern pattern) throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(file.toFile()));
-
-        searchAndPrepareMatchingSets(file, pattern, reader);
-
-        reader.close();
     }
 
     private static void searchAndPrepareMatchingSets(Path file, Pattern pattern, BufferedReader reader) throws IOException {
