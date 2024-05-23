@@ -22,6 +22,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class VelocityFileSearch {
+    public static final String CONFLUENCE_VELOCITY_PROPERTIES = "/Users/ggautam/Work/source/atlassian/confluence/confluence-core/confluence/src/main/resources/velocity-default.properties";
+    private static final String CROWD_VELOCITY_PROPERTIES = "/Users/ggautam/Work/source/atlassian/atlassian-embedded-crowd/embedded-crowd-admin-plugin/src/main/resources/embedded-crowd-admin-velocity.properties";
     static Set<Match> fullMatchesFoundInVMs = new HashSet<>();
     static Set<String> foundMethodNamesInVMs = new HashSet<>();
     static Set<String> coreAllowedMethodSet = new HashSet<>();
@@ -43,13 +45,13 @@ public class VelocityFileSearch {
 //            "/Users/ggautam/Work/data/temp/atlassian/rest-api-browser",
 //            "/Users/ggautam/Work/data/temp/atlassian/confluence-toc-plugin",
 //            "/Users/ggautam/Work/data/temp/confluence-questions",
-            "/Users/ggautam/Work/data/temp/confluence-ancillary-plugins",
-            "/Users/ggautam/Work/data/temp/confluence-content-plugins",
-            "/Users/ggautam/Work/data/temp/confluence-frontend-plugins",
-            "/Users/ggautam/Work/data/temp/confluence-jira-integration-plugins",
-            "/Users/ggautam/Work/data/temp/confluence-open-plugins",
-            "/Users/ggautam/Work/data/temp/confluence-public-plugins",
-            "/Users/ggautam/Work/data/temp/confluence",
+//            "/Users/ggautam/Work/data/temp/confluence-ancillary-plugins",
+//            "/Users/ggautam/Work/data/temp/confluence-content-plugins",
+//            "/Users/ggautam/Work/data/temp/confluence-frontend-plugins",
+//            "/Users/ggautam/Work/data/temp/confluence-jira-integration-plugins",
+//            "/Users/ggautam/Work/data/temp/confluence-open-plugins",
+//            "/Users/ggautam/Work/data/temp/confluence-public-plugins",
+            "/Users/ggautam/Work/data/temp/atlassian-embedded-crowd",
     };
 
     static String confluenceDirPath = "/Users/ggautam/Work/source/atlassian/confluence";
@@ -81,7 +83,8 @@ public class VelocityFileSearch {
 
     public static void main(String[] args) throws IOException {
         System.out.println("Scanning velocity-default.properties XMLs");
-        loadMethodNamesFromVelocityProperties();
+//        loadMethodNamesFromVelocityProperties(CONFLUENCE_VELOCITY_PROPERTIES);
+        loadMethodNamesFromVelocityProperties(CROWD_VELOCITY_PROPERTIES);
 
         System.out.println("Scanning core plugin XMLs");
         loadMethodNamesFromPluginXMLs(methodAllowlistRegex, confluenceDirPath, coreAllowedMethodSet);
@@ -154,9 +157,9 @@ public class VelocityFileSearch {
         System.out.println(pluginAllowedMethodSet);
     }
 
-    private static void loadMethodNamesFromVelocityProperties() {
+    private static void loadMethodNamesFromVelocityProperties(String propertiesFile) {
         Properties properties = new Properties();
-        try (InputStream inputStream = new FileInputStream("/Users/ggautam/Work/source/atlassian/confluence/confluence-core/confluence/src/main/resources/velocity-default.properties")) {
+        try (InputStream inputStream = new FileInputStream(propertiesFile)) {
             properties.load(inputStream);
 
             String[] methods = properties.getProperty("introspector.proper.allowlist.methods").split(",");
