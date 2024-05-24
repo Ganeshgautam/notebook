@@ -57,7 +57,7 @@ public class VelocityFileSearch {
 
     static String confluenceDirPath = "/Users/ggautam/Work/source/atlassian/confluence";
     static String filteredOutputFileName = "matches-filtered";
-    static String allOutputFileName = "matches-filtered";
+    static String allOutputFileName = "matches-unfiltered";
 
     static String onlyMethodNamesFileName = "matches-filtered-method-names";
 
