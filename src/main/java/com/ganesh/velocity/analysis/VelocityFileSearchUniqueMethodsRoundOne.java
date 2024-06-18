@@ -14,14 +14,18 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class VelocityFileSearch {
+/**
+ * This class gets around ~50% false positives.
+ * It relies on unique method names and hence the list produced from this logic is just part of Round 1.
+ * Compliment this with round two to have more comprehensive object plus method combo.
+ */
+public class VelocityFileSearchUniqueMethodsRoundOne {
     public static final String CONFLUENCE_VELOCITY_PROPERTIES = "/Users/ggautam/Work/source/atlassian/confluence/confluence-core/confluence/src/main/resources/velocity-default.properties";
     private static final String CROWD_VELOCITY_PROPERTIES = "/Users/ggautam/Work/source/atlassian/atlassian-embedded-crowd/embedded-crowd-admin-plugin/src/main/resources/embedded-crowd-admin-velocity.properties";
     static Set<Match> fullMatchesFoundInVMs = new HashSet<>();
@@ -46,8 +50,8 @@ public class VelocityFileSearch {
 //            "/Users/ggautam/Work/data/temp/atlassian/rest-api-browser",
 //            "/Users/ggautam/Work/data/temp/atlassian/confluence-toc-plugin",
 //            "/Users/ggautam/Work/data/temp/confluence-questions",
-            "/Users/ggautam/Work/data/temp/confluence-ancillary-plugins",
-//            "/Users/ggautam/Work/data/temp/confluence-content-plugins",
+//            "/Users/ggautam/Work/data/temp/confluence-ancillary-plugins",
+            "/Users/ggautam/Work/data/temp/confluence-content-plugins",
 //            "/Users/ggautam/Work/data/temp/confluence-frontend-plugins",
 //            "/Users/ggautam/Work/data/temp/confluence-jira-integration-plugins",
 //            "/Users/ggautam/Work/data/temp/confluence-open-plugins",

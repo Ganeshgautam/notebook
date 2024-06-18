@@ -20,7 +20,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class VelocityReferenceFileSearch {
+/**
+ * This class gets around ~90% false positives.
+ * <br>
+ * It relies on reference names and matching class names of references with contains clause along with exact method
+ * and hence the list produced from this logic is just Round 2 with high false positives.
+ * Example: if a VM contains "$action.getSomething"
+ * and a class is marked as allowed with "SomeAction#getSomething()", then the tooling skips the VM expression.
+ * Here in this example "SomeAction".containsIgnoreCase("action") is true and hence the VM expression is skipped.
+ * <br>
+ * Compliment this with round one to have more comprehensive object plus method combo.
+ */
+public class VelocityRefClassNameMethodSearchRoundTwo {
     static Set<Match> unMatchedFoundInVMs = new HashSet<>();
     static Set<String> foundMethodNamesInVMs = new HashSet<>();
     static Set<Match> unFitleredRawVMsoriginalSet = new HashSet<>();
@@ -33,23 +44,23 @@ public class VelocityReferenceFileSearch {
     public static final String CONFLUENCE_IMPLICIT_VTL = "/Users/ggautam/Work/source/atlassian/confluence/confluence-core/confluence-webapp/src/main/resources";
     static String confluenceDirPath = "/Users/ggautam/Work/source/atlassian/confluence";
     static String[] directoryPathsToBeScanned = {
-            "/Users/ggautam/Work/data/temp/atlassian/application-links",
-            "/Users/ggautam/Work/data/temp/atlassian/atlassian-analytics",
-            "/Users/ggautam/Work/data/temp/atlassian/atlassian-bot-killer-plugin",
-            "/Users/ggautam/Work/data/temp/atlassian/atlassian-keyboard-shortcuts",
-            "/Users/ggautam/Work/data/temp/atlassian/atlassian-mail",
-            "/Users/ggautam/Work/data/temp/atlassian/atlassian-nav-links",
-            "/Users/ggautam/Work/data/temp/atlassian/atlassian-oauth",
-            "/Users/ggautam/Work/data/temp/atlassian/atlassian-plugins-osgi-testrunner-parent",
-            "/Users/ggautam/Work/data/temp/atlassian/atlassian-plugins-viewer",
-            "/Users/ggautam/Work/data/temp/atlassian/atlassian-streams",
-            "/Users/ggautam/Work/data/temp/atlassian/functest-plugin",
-            "/Users/ggautam/Work/data/temp/atlassian/personal-access-tokens",
-            "/Users/ggautam/Work/data/temp/atlassian/rest-api-browser",
-            "/Users/ggautam/Work/data/temp/atlassian/confluence-toc-plugin",
-            "/Users/ggautam/Work/data/temp/confluence-questions",
+//            "/Users/ggautam/Work/data/temp/atlassian/application-links",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-analytics",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-bot-killer-plugin",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-keyboard-shortcuts",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-mail",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-nav-links",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-oauth",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-plugins-osgi-testrunner-parent",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-plugins-viewer",
+//            "/Users/ggautam/Work/data/temp/atlassian/atlassian-streams",
+//            "/Users/ggautam/Work/data/temp/atlassian/functest-plugin",
+//            "/Users/ggautam/Work/data/temp/atlassian/personal-access-tokens",
+//            "/Users/ggautam/Work/data/temp/atlassian/rest-api-browser",
+//            "/Users/ggautam/Work/data/temp/atlassian/confluence-toc-plugin",
+//            "/Users/ggautam/Work/data/temp/confluence-questions",
 //            "/Users/ggautam/Work/data/temp/confluence-ancillary-plugins",
-//            "/Users/ggautam/Work/data/temp/confluence-content-plugins",
+            "/Users/ggautam/Work/data/temp/confluence-content-plugins",
 //            "/Users/ggautam/Work/data/temp/confluence-frontend-plugins",
 //            "/Users/ggautam/Work/data/temp/confluence-jira-integration-plugins",
 //            "/Users/ggautam/Work/data/temp/confluence-open-plugins",
